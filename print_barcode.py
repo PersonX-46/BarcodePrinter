@@ -46,7 +46,7 @@ import usb.util
 
 # Define Vendor and Product ID for the printer
 VENDOR_ID = 0x20d1
-PRODUCT_ID = 0x7007  
+PRODUCT_ID = 0x7007
 
 # Find the printer
 printer = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
@@ -68,17 +68,34 @@ clear_buffer = "^XA^CLS^XZ"
 # ZPL command for a simple label
 zpl_data = f"""
 ^XA
-^LH0,-40
-^PW889
-^LL675
-^FO320,-40^A0N,20,20^FDCompany Name^FS
-^FO310,30^A0N,15,20^FD100 PLUS BOX^FS
-^BY1,1,60  ; Fixed-width barcode command
-^FO300,50^BCN,50,N,N,N^FD1234567890^FS
-^FO300,110^A0N,30,30^FDRM100^FS
+^PW280
+^MD3
+^FO10,0,^A0N,20,20^FDCompany Name^FS
+^FO10,25^A0N,15,20^FD955670105139^FS
+^FO10,40^BY2,1.5,0^BCN,50,N,Y,N,N^FD>;955670105139^FS
+^FO10,94^A0N,15,20^FD100 PLUS BOX^FS
+^FO10,120^A0N,30,30^FDRM100^FS
 ^PQ1
 ^XZ
 """
+
+m = """
+SPEED 2.0
+DENSITY 7
+DIRECTION 0
+SIZE 35MM, 25MM
+OFFSET 0.000
+REFERENCE 0,0
+CLS
+TEXT 320,5,"2",0,1,1,"company name"
+TEXT 310,40,"2",0,1,1,"955670105139"
+TEXT 310,120,"1",0,1,1,"description"
+BARCODE 320,60,"128",50,0,0,2,10,"955670105139"
+TEXT 310,160,"4",0,1,1,"RM0"
+PRINT 1
+EOP
+"""
+
 
 try:
     # Send the clear buffer command to the printer first

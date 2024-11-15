@@ -1,3 +1,4 @@
+import re
 import sys
 import pyodbc
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QLineEdit, QTableWidget, QTableWidgetItem, QMessageBox, QGridLayout, QHBoxLayout
@@ -118,6 +119,8 @@ class BarcodeApp(QWidget):
                 self.companyName = config['companyName']
                 self.location = config.get('location')
                 self.command_language:str = config['commandLanguage']
+                self.zpl_template:str = config['zplTemplate']
+                self.tpsl_template:str = config['tpslTemplate']
         except FileNotFoundError:
             QMessageBox.critical(self, 'Config Error', f'Configuration file not found at {self.config_path}')
             sys.exit(1)
@@ -198,6 +201,9 @@ class BarcodeApp(QWidget):
                 print('Success: Connected to Database')
         except pyodbc.Error as e:
             print(f"Error connecting to database: {e}")
+
+    def replace_placeholders(self, template, **kwargs):
+        return re.sub(r'{{(.*?)}}', lambda match: str(kwargs.get(match.group(1), match.group(0))), template)
 
     def start_fetch_items(self):
         if not self.db_connected:
@@ -373,45 +379,14 @@ class BarcodeApp(QWidget):
 
                 printer_clear = ""
                 barcode_data = ""
-                if printer_clear:
-                    print("contains data")
                 if self.command_language.lower() == "tpsl":
-
+                    print_data = self.replace_placeholders(self.zpl_template, companyName=self.companyName, description=description, barcode_value = barcode_value, unit_price_integer=unit_price_integer, copies=copies)
                     printer_clear = "CLS"
-                    barcode_data = f"""
-    SPEED 2.0
-    DENSITY 7
-    DIRECTION 0
-    SIZE 35MM, 25MM
-    OFFSET 0.000
-    REFERENCE 0,0
-    CLS
-    TEXT 320,5,"2",0,1,1,"{self.companyName}"
-    TEXT 310,40,"2",0,1,1,"{barcode_value}"
-    TEXT 310,120,"1",0,1,1,"{description}"
-    BARCODE 300,60,"128",50,0,0,2,10,"{barcode_value}"
-    TEXT 310,160,"4",0,1,1,"{unit_price_integer}"
-    PRINT {copies}
-    EOP
-    """
                 elif self.command_language.lower() == "zpl":
                     printer_clear = "^XA^CLS^XZ"
-                    barcode_data = f"""
-^XA
-^LH0,-40
-^PW889
-^LL675
-^FO320,-40^A0N,20,20^FD{self.companyName}^FS
-^FO310,30^A0N,15,20^FD{description}^FS
-^BY1,1,60  ; Fixed-width barcode command
-^FO300,50^BCN,50,N,N,N^FD{barcode_value}^FS
-^FO300,110^A0N,30,30^FD{unit_price_integer}^FS
-^PQ{copies}
-^XZ
-    """
+                    print_data = self.replace_placeholders(self.zpl_template, companyName=self.companyName, description=description, barcode_value = barcode_value, unit_price_integer=unit_price_integer, copies=copies)
                 # Send the barcode data to the printer
-                print("data", barcode_data)
-                printer.write(self.endpoint, barcode_data.encode('ascii'))
+                printer.write(self.endpoint, print_data.encode('ascii'))
                 print(f"Barcode print command sent successfully for item: {barcode_value}")
 
         except usb.core.USBError as e:
