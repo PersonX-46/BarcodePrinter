@@ -2,7 +2,7 @@ import os
 import re
 import sys
 import pyodbc
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QLineEdit, QTableWidget, QTableWidgetItem, QMessageBox, QGridLayout, QHBoxLayout, QMainWindow
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QLineEdit, QTableWidget, QTableWidgetItem, QMessageBox, QGridLayout, QHBoxLayout, QVBoxLayout, QMenuBar, QAction, QMainWindow
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QFileSystemWatcher
 from PyQt5.QtWidgets import QHeaderView
 from PyQt5.QtGui import QIcon, QBrush, QColor
@@ -88,15 +88,15 @@ class FetchItemsThread(QThread):
 
 
 
-class BarcodeApp(QWidget):
+class BarcodeApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUI()
-        self.config_path = r'C:\barcode\barcode.json' 
+        self.config_path = r'C:\barcode\barcode.json'
         self.file_watcher = QFileSystemWatcher()
         self.file_watcher.addPath(self.config_path)
         self.file_watcher.fileChanged.connect(self.handle_config_change)
-        self.load_config() 
+        self.load_config()
         self.backend = usb.backend.libusb1.get_backend(find_library='libusb-1.0.ddl')
         self.setWindowIcon(QIcon(self.resource_path(("logo.ico"))))
         self.db_connected = False
@@ -164,111 +164,104 @@ class BarcodeApp(QWidget):
 
 
     def initUI(self):
+        # Set the window properties
         self.setWindowTitle('Barcode Printer')
         self.setGeometry(200, 200, 1400, 600)
         self.setWindowIcon(QIcon(self.resource_path("logo.ico")))
-        # Main grid layout
-        grid_layout = QGridLayout()
 
-        # Horizontal layout for search bar and button
+        # Create a central widget to hold the main layout
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)  # Set central widget
+
+        # Main layout for the widget
+        grid_layout = QGridLayout(central_widget)
+
+        # === Menu Bar Section ===
+        menu_bar = self.menuBar()  # Use QMainWindow's menuBar method
+        file_menu = menu_bar.addMenu('Settings')
+        settings_action = QAction('Open Settings', self)
+        settings_action.triggered.connect(self.open_settings)
+        file_menu.addAction(settings_action)
+
+
+        # === Search Bar Section ===
         search_layout = QHBoxLayout()
         search_label = QLabel("Search:")
         self.item_code_input = QLineEdit(self)
         self.item_code_input.setPlaceholderText('Enter Item Code')
         self.item_code_input.textChanged.connect(self.filter_items_binary)
 
+        # Search button
         self.search_by_description = QPushButton("Search", self)
         self.search_by_description.setCursor(Qt.PointingHandCursor)
         self.search_by_description.setStyleSheet("""
-QPushButton {
-    background: qlineargradient(spread:pad, x1:0.148, y1:1, x2:1, y2:1, stop:0.233503 rgba(53, 132, 228, 255), stop:1 rgba(26, 95, 180, 255));
-    color: white;
-    border-top-left-radius: 8px;
-    border-bottom-right-radius: 8px;
-    font-style: italic;
-    font-weight: bold;
-    qproperty-cursor: pointingHandCursor;
-}
-
-QPushButton:hover {
-	background: white;
-    border: 2px solid rgb(53, 132, 228);
-    color: black;
-}                                              
-
-""")
+        QPushButton {
+            background: qlineargradient(spread:pad, x1:0.148, y1:1, x2:1, y2:1, stop:0.233503 rgba(53, 132, 228, 255), stop:1 rgba(26, 95, 180, 255));
+            color: white;
+            border-top-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            font-style: italic;
+            font-weight: bold;
+            qproperty-cursor: pointingHandCursor;
+        }
+        QPushButton:hover {
+            background: white;
+            border: 2px solid rgb(53, 132, 228);
+            color: black;
+        }
+        """)
         self.search_by_description.clicked.connect(self.filter_items)
 
-        # Add widgets to the horizontal search layout
+        # Add widgets to the search layout
         search_layout.addWidget(search_label)
         search_layout.addWidget(self.item_code_input)
         search_layout.addWidget(self.search_by_description)
 
-        # Add the search layout to the grid layout (entire top row)
+        # Add search layout to the grid layout
         grid_layout.addLayout(search_layout, 0, 0, 1, 3)
 
-        # Table widget spanning all columns in the second row
+        # === Item Table Section ===
         self.item_table = QTableWidget(self)
         self.item_table.setColumnCount(9)
         self.item_table.setHorizontalHeaderLabels([
-            "Select", "Item Code", "Description", "Unit Price", "Unit Cost", 
+            "Select", "Item Code", "Description", "Unit Price", "Unit Cost",
             "Barcode", "Location", "Location Price", "Number of Copies"
         ])
         self.item_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.item_table.setSelectionMode(QTableWidget.NoSelection)
-        grid_layout.addWidget(self.item_table, 1, 0, 1, 3)  # Spanning all 3 columns
 
-        # Print button centered in the bottom row
+        # Add table to the grid layout
+        grid_layout.addWidget(self.item_table, 1, 0, 1, 3)
+
+        # === Buttons Section ===
         print_layout = QHBoxLayout()
+
+        # Print Button
         self.print_button = QPushButton('Print Barcode', self)
         self.print_button.setStyleSheet("""
-QPushButton {
-    background: white;
-    border: 2px solid rgb(53, 132, 228);
-    color: black;
-    border-top-left-radius: 8px;
-    border-bottom-right-radius: 8px;
-    font-style: italic;
-    font-weight: bold;
-    qproperty-cursor: pointingHandCursor;
-}
-
-QPushButton:hover {
-    background: qlineargradient(spread:pad, x1:0.148, y1:1, x2:1, y2:1, stop:0.233503 rgba(53, 132, 228, 255), stop:1 rgba(26, 95, 180, 255));
-    color:white;
-}    
-""")
+        QPushButton {
+            background: white;
+            border: 2px solid rgb(53, 132, 228);
+            color: black;
+            border-top-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            font-style: italic;
+            font-weight: bold;
+            qproperty-cursor: pointingHandCursor;
+        }
+        QPushButton:hover {
+            background: qlineargradient(spread:pad, x1:0.148, y1:1, x2:1, y2:1, stop:0.233503 rgba(53, 132, 228, 255), stop:1 rgba(26, 95, 180, 255));
+            color: white;
+        }
+        """)
         self.print_button.setCursor(Qt.PointingHandCursor)
         self.print_button.clicked.connect(self.print_barcode)
 
-        self.settings_button = QPushButton("Settings", self)
-        self.settings_window = SettingsWindow()
-        self.settings_button.clicked.connect(self.open_settings)
-        self.settings_button.setStyleSheet("""
-QPushButton {
-    background: white;
-    border: 2px solid rgb(53, 132, 228);
-    color: black;
-    border-top-left-radius: 8px;
-    border-bottom-right-radius: 8px;
-    font-style: italic;
-    font-weight: bold;
-    qproperty-cursor: pointingHandCursor;
-}
-
-QPushButton:hover {
-    background: qlineargradient(spread:pad, x1:0.148, y1:1, x2:1, y2:1, stop:0.233503 rgba(53, 132, 228, 255), stop:1 rgba(26, 95, 180, 255));
-    color:white;
-}    
-""")
-        self.settings_button.setCursor(Qt.PointingHandCursor)
+        # Add buttons to the print layout
         print_layout.addWidget(self.print_button)
-        print_layout.addWidget(self.settings_button)
+
+        # Add print layout to the grid layout
         grid_layout.addLayout(print_layout, 2, 0, 1, 3, alignment=Qt.AlignCenter)
-
-
-        # Set the main layout
-        self.setLayout(grid_layout)
 
     def loadStylesheet(self):
         stylesheet = """
@@ -502,7 +495,7 @@ QPushButton:hover {
             print(f'Value Error: {e}')
         finally:
             # Show success message once after all items are printed
-            printer.write(self.endpoint, printer_clear.encode('ascii'))
+            printer.write(self.endpoint, printer_clear.encode('utf-8'))
             QMessageBox.information(self, 'Success', 'All selected items have been successfully sent to the printer!')
             usb.util.dispose_resources(printer)
 
