@@ -1,16 +1,18 @@
+import os
 import re
 import sys
 import pyodbc
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QLineEdit, QTableWidget, QTableWidgetItem, QMessageBox, QGridLayout, QHBoxLayout
-from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QLineEdit, QTableWidget, QTableWidgetItem, QMessageBox, QGridLayout, QHBoxLayout, QMainWindow
+from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QFileSystemWatcher
 from PyQt5.QtWidgets import QHeaderView
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QBrush, QColor
 import usb
 import usb.core
 import usb.util
 import usb.backend.libusb1
 import json
 from bisect import bisect_left
+from settings import SettingsWindow
 
 class FilterItemsBinaryThread(QThread):
     items_filtered = pyqtSignal(list)  # Signal to emit filtered items
@@ -79,7 +81,8 @@ class FetchItemsThread(QThread):
             """
             cursor.execute(query)
             items = cursor.fetchall()
-            self.items_fetched.emit(items)
+            self.all_items = sorted(items, key=lambda x:x[4].lower() )
+            self.items_fetched.emit(self.all_items)
         except pyodbc.Error as e:
             print(f"Error fetching items: {e}")
 
@@ -90,9 +93,12 @@ class BarcodeApp(QWidget):
         super().__init__()
         self.initUI()
         self.config_path = r'C:\barcode\barcode.json' 
+        self.file_watcher = QFileSystemWatcher()
+        self.file_watcher.addPath(self.config_path)
+        self.file_watcher.fileChanged.connect(self.handle_config_change)
         self.load_config() 
         self.backend = usb.backend.libusb1.get_backend(find_library='libusb-1.0.ddl')
-        self.setWindowIcon(QIcon("icon.png"))
+        self.setWindowIcon(QIcon(self.resource_path(("logo.ico"))))
         self.db_connected = False
         self.connection = None
         self.warning_shown = False
@@ -104,6 +110,21 @@ class BarcodeApp(QWidget):
 
         # Start fetching items on a separate thread
         self.start_fetch_items()
+
+    def handle_config_change(self):
+        """
+        Handle changes in the JSON config file.
+        """
+        print("Configuration file changed. Reloading...")
+        try:
+            self.load_config()  # Reload configuration
+            if self.db_connected:
+                self.connection.close()
+            self.connect_to_database()  # Reconnect to the database
+            self.start_fetch_items()   # Refresh items
+        except Exception as e:
+            QMessageBox.critical(self, 'Error', f"Failed to reload configuration: {e}")
+
     
     def load_config(self):
         try:
@@ -131,10 +152,21 @@ class BarcodeApp(QWidget):
             QMessageBox.critical(self, 'Config Error', f'Missing key in configuration file: {e}')
             sys.exit(1)
 
+    def resource_path(self, relative_path):
+        """ Get absolute path to resource, works for dev and for PyInstaller """
+        try:
+            # PyInstaller creates a temp folder and stores path in _MEIPASS
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(".")
+
+        return os.path.join(base_path, relative_path)
+
+
     def initUI(self):
         self.setWindowTitle('Barcode Printer')
         self.setGeometry(200, 200, 1400, 600)
-
+        self.setWindowIcon(QIcon(self.resource_path("logo.ico")))
         # Main grid layout
         grid_layout = QGridLayout()
 
@@ -143,9 +175,28 @@ class BarcodeApp(QWidget):
         search_label = QLabel("Search:")
         self.item_code_input = QLineEdit(self)
         self.item_code_input.setPlaceholderText('Enter Item Code')
-        self.item_code_input.textChanged.connect(lambda: self.filter_items_binary(sortBy='barcode'))
+        self.item_code_input.textChanged.connect(self.filter_items_binary)
 
         self.search_by_description = QPushButton("Search", self)
+        self.search_by_description.setCursor(Qt.PointingHandCursor)
+        self.search_by_description.setStyleSheet("""
+QPushButton {
+    background: qlineargradient(spread:pad, x1:0.148, y1:1, x2:1, y2:1, stop:0.233503 rgba(53, 132, 228, 255), stop:1 rgba(26, 95, 180, 255));
+    color: white;
+    border-top-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    font-style: italic;
+    font-weight: bold;
+    qproperty-cursor: pointingHandCursor;
+}
+
+QPushButton:hover {
+	background: white;
+    border: 2px solid rgb(53, 132, 228);
+    color: black;
+}                                              
+
+""")
         self.search_by_description.clicked.connect(self.filter_items)
 
         # Add widgets to the horizontal search layout
@@ -168,9 +219,52 @@ class BarcodeApp(QWidget):
         grid_layout.addWidget(self.item_table, 1, 0, 1, 3)  # Spanning all 3 columns
 
         # Print button centered in the bottom row
+        print_layout = QHBoxLayout()
         self.print_button = QPushButton('Print Barcode', self)
+        self.print_button.setStyleSheet("""
+QPushButton {
+    background: white;
+    border: 2px solid rgb(53, 132, 228);
+    color: black;
+    border-top-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    font-style: italic;
+    font-weight: bold;
+    qproperty-cursor: pointingHandCursor;
+}
+
+QPushButton:hover {
+    background: qlineargradient(spread:pad, x1:0.148, y1:1, x2:1, y2:1, stop:0.233503 rgba(53, 132, 228, 255), stop:1 rgba(26, 95, 180, 255));
+    color:white;
+}    
+""")
+        self.print_button.setCursor(Qt.PointingHandCursor)
         self.print_button.clicked.connect(self.print_barcode)
-        grid_layout.addWidget(self.print_button, 2, 0, 1, 3, alignment=Qt.AlignCenter)
+
+        self.settings_button = QPushButton("Settings", self)
+        self.settings_window = SettingsWindow()
+        self.settings_button.clicked.connect(self.open_settings)
+        self.settings_button.setStyleSheet("""
+QPushButton {
+    background: white;
+    border: 2px solid rgb(53, 132, 228);
+    color: black;
+    border-top-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    font-style: italic;
+    font-weight: bold;
+    qproperty-cursor: pointingHandCursor;
+}
+
+QPushButton:hover {
+    background: qlineargradient(spread:pad, x1:0.148, y1:1, x2:1, y2:1, stop:0.233503 rgba(53, 132, 228, 255), stop:1 rgba(26, 95, 180, 255));
+    color:white;
+}    
+""")
+        self.settings_button.setCursor(Qt.PointingHandCursor)
+        print_layout.addWidget(self.print_button)
+        print_layout.addWidget(self.settings_button)
+        grid_layout.addLayout(print_layout, 2, 0, 1, 3, alignment=Qt.AlignCenter)
 
 
         # Set the main layout
@@ -179,11 +273,11 @@ class BarcodeApp(QWidget):
     def loadStylesheet(self):
         stylesheet = """
         QLabel { font-size: 20px; font-weight: bold; }
-        QLineEdit { font-size: 18px; padding: 8px; border: 1px solid #dfdfdf; border-radius: 8px; }
+        QLineEdit { font-size: 18px; padding: 8px; 	border: 2px solid rgb(53, 132, 228);border-radius: 10px;
+    }
         QTableWidget { font-size: 16px; padding: 4px; border: 1px solid black; }
         QPushButton {
-            background-color: #0004ff; color: white; width: 150px; border: none;
-            border-radius: 10px; padding: 10px 20px; font-size: 20px; margin: 10px; cursor: pointer;
+           padding: 10px 20px; font-size: 20px; margin: 10px;
         }
         QPushButton:hover { background-color: rgb(0, 106, 255); }
         QPushButton:pressed { background-color: #000099; }
@@ -217,61 +311,81 @@ class BarcodeApp(QWidget):
         self.items = items
         self.all_items = sorted(self.items, key=lambda x: x[4].lower())
         self.display_items(self.items)
+
+    def open_settings(self):
+        self.settings_window = SettingsWindow()
+        self.settings_window.show()
     
     def display_items(self, items):
-        self.item_table.setRowCount(len(items))
-        self.item_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)  # Select column, smallest
+        
+        self.item_table.setRowCount(len(items[:100]))
+
+        # Set column resize modes for headers
+        self.item_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)  # Select column
         self.item_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)           # Item Code
-        self.item_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)           # Description, largest
+        self.item_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)           # Description
         self.item_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Unit Price
         self.item_table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Unit Cost
-        self.item_table.horizontalHeader().setSectionResizeMode(5, QHeaderView.Stretch)  # Barcode
+        self.item_table.horizontalHeader().setSectionResizeMode(5, QHeaderView.Stretch)           # Barcode
         self.item_table.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)  # Location
-        #self.item_table.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)  # Location Price
-        #self.item_table.horizontalHeader().setSectionResizeMode(8, QHeaderView.ResizeToContents)  # Number Of Copies
 
-
-        # Set the proportions by manually adjusting the column widths after stretching
+        # Manually adjust column widths after applying resize modes for more control
         self.item_table.setColumnWidth(0, 50)   # Select column, smallest
         self.item_table.setColumnWidth(1, 150)  # Item Code column, medium
         self.item_table.setColumnWidth(2, 300)  # Description column, largest
-        self.item_table.setColumnWidth(3, 100)  # Unit Price column, smaller
-        self.item_table.setColumnWidth(4, 150)  # Barcode column, medium
-        self.item_table.setColumnWidth(5, 70)   # Copies column, smaller
-        for row_number, item in enumerate(items):
+        self.item_table.setColumnWidth(3, 100)  # Unit Price column
+        self.item_table.setColumnWidth(4, 150)  # Unit Cost column
+        self.item_table.setColumnWidth(5, 100)  # Barcode column, adjusted for consistency
+        self.item_table.setColumnWidth(6, 100)  # Location column
+
+        # Add rows of items to the table
+        for row_number, item in enumerate(items[:100]):
             checkbox_item = QTableWidgetItem()
             checkbox_item.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
             checkbox_item.setCheckState(Qt.Unchecked)
             self.item_table.setItem(row_number, 0, checkbox_item)
             self.item_table.item(row_number, 0).setTextAlignment(Qt.AlignLeft)
 
-            item_code, description, unit_price, unit_cost, barcode, location, location_price= item
-            barcode_value = item_code if barcode is None else barcode  # Set barcode_value based on condition
+            # Extract item details
+            item_code, description, unit_price, unit_cost, barcode, location, location_price = item
+            barcode_value = item_code if barcode is None else barcode  # Fallback to item_code if barcode is None
 
             try:
+                # Format currency values
                 formatted_unit_price = f"RM {float(unit_price):.2f}" if unit_price is not None else "RM 0.00"
                 formatted_unit_cost = f"RM {float(unit_cost):.2f}" if unit_cost is not None else "RM 0.00"
                 formatted_location_price = f"RM {float(location_price):.2f}" if location_price is not None else "RM 0.00"
-
             except ValueError:
-                formatted_unit_price = "0.00"
-            for col_number, value in enumerate([item_code, description, formatted_unit_price , formatted_unit_cost, barcode_value , location, formatted_location_price ], start=1):
+                formatted_unit_price = "RM 0.00"
+
+            # Set the data for each row
+            for col_number, value in enumerate([item_code, description, formatted_unit_price, formatted_unit_cost, barcode_value, location, formatted_location_price], start=1):
                 table_item = QTableWidgetItem(str(value))
                 table_item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                 table_item.setTextAlignment(Qt.AlignCenter)
                 self.item_table.setItem(row_number, col_number, table_item)
 
+            # Add copies column (editable)
             copies_item = QTableWidgetItem("1")
             copies_item.setFlags(Qt.ItemIsEditable | Qt.ItemIsEnabled)
             copies_item.setTextAlignment(Qt.AlignCenter)
             self.item_table.setItem(row_number, 8, copies_item)
 
+            # Set background color for every even row (index 0, 2, 4, etc.)
+            if row_number % 2 == 0:
+                for col_number in range(self.item_table.columnCount()):
+                    item = self.item_table.item(row_number, col_number)
+                    item.setBackground(QBrush(QColor(230, 238, 255)))  # Set light gray background color for even rows
+
+        # Adjust column sizes after filling in data
         self.item_table.resizeColumnsToContents()
 
+        # Add padding to each column
         padding = 20
         for column in range(self.item_table.columnCount()):
             current_width = self.item_table.columnWidth(column)
             self.item_table.setColumnWidth(column, current_width + padding)
+
 
     def start_filter_items_thread(self):
         # Ensure database is connected
@@ -294,37 +408,28 @@ class BarcodeApp(QWidget):
         self.filter_items_thread.items_filtered.connect(self.display_items)
         self.filter_items_thread.start()
 
-    def binary_search(self, items, target:str, sortBy:str='barcode'):
+    def binary_search(self, items, target:str):
 
-        if sortBy == 'description':
-            item_codes = [str(item[1]).lower() for item in items]
-        elif sortBy == 'barcode':
-            item_codes = [str(item[4]).lower() for item in items]
+        item_codes = [str(item[4]).lower() for item in items]
         index = bisect_left(item_codes, target.lower())
 
         if index < len(item_codes) and item_codes[index] == target.lower():
             return items[index]
         return None
 
-    def filter_items_binary(self, sortBy:str='barcode'):
+    def filter_items_binary(self):
         if not self.db_connected or not hasattr(self, 'all_items'):
             if not self.warning_shown:
                 QMessageBox.warning(self, 'Database Error', 'Database is not connected. Searched items will not be shown.')
                 self.warning_shown = True
-            return
-        
-        if sortBy == "description":
-             self.all_items = sorted(self.items, key=lambda x: x[1].lower())
-        elif sortBy == 'barcode':
-            self.all_items = sorted(self.items, key=lambda x:x[4].lower() )
-
+            return  
         search_text = self.item_code_input.text().strip().lower()
 
         if not search_text:
-            self.display_items(self.all_items)
+            self.display_items(self.all_items[:100])
             return
         
-        found_item = self.binary_search(self.all_items, search_text, sortBy=sortBy)
+        found_item = self.binary_search(self.all_items, search_text)
         if found_item:
             self.display_items([found_item])
         else:
@@ -380,13 +485,13 @@ class BarcodeApp(QWidget):
                 printer_clear = ""
                 barcode_data = ""
                 if self.command_language.lower() == "tpsl":
-                    print_data = self.replace_placeholders(self.zpl_template, companyName=self.companyName, description=description, barcode_value = barcode_value, unit_price_integer=unit_price_integer, copies=copies)
+                    print_data = self.replace_placeholders(self.tpsl_template, companyName=self.companyName, description=description, barcode_value = barcode_value, unit_price_integer=unit_price_integer, copies=copies)
                     printer_clear = "CLS"
                 elif self.command_language.lower() == "zpl":
                     printer_clear = "^XA^CLS^XZ"
                     print_data = self.replace_placeholders(self.zpl_template, companyName=self.companyName, description=description, barcode_value = barcode_value, unit_price_integer=unit_price_integer, copies=copies)
                 # Send the barcode data to the printer
-                printer.write(self.endpoint, print_data.encode('ascii'))
+                printer.write(self.endpoint, print_data.encode('utf-8'))
                 print(f"Barcode print command sent successfully for item: {barcode_value}")
 
         except usb.core.USBError as e:
