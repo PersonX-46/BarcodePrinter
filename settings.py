@@ -5,13 +5,15 @@ from PyQt5.QtGui import QPixmap
 from PyQt5 import QtWidgets, uic
 from ui_mainwindow2 import Ui_MainWindow
 import json
+from usb.core import find as find_usb
+import usb
 import os
 
 
 class SettingsWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super(SettingsWindow, self).__init__()
-
+        self.backend = usb.backend.libusb1.get_backend(find_library='libusb-1.0.ddl')
         # Load the UI file first
         uic.loadUi(self.resource_path("MainWindow2.ui"), self)
         background = QPixmap(self.resource_path("background.jpg"))
@@ -27,6 +29,9 @@ class SettingsWindow(QMainWindow, Ui_MainWindow):
         self.databaseName = self.findChild(QtWidgets.QLineEdit, "et_databaseName")
         self.userName = self.findChild(QtWidgets.QLineEdit, "et_userName")
         self.password = self.findChild(QtWidgets.QLineEdit, "et_password")
+        self.printer_list = self.findChild(QtWidgets.QComboBox, 'combo_printers')
+        self.populate_printer_list()
+        self.printer_list.currentIndexChanged.connect(self.update_printer_in_json)
         self.printerVid = self.findChild(QtWidgets.QLineEdit, "et_printerVid")
         self.printerPid = self.findChild(QtWidgets.QLineEdit, "et_printerPid")
         self.endpoint = self.findChild(QtWidgets.QLineEdit, "et_endPoint")
@@ -55,6 +60,15 @@ class SettingsWindow(QMainWindow, Ui_MainWindow):
         # Load data from JSON file to UI elements
         self.load_data()
 
+    def update_printer_in_json(self):
+        current_data = self.printer_list.currentData()
+        if current_data:  # Ensure data exists
+            vid, pid, out_endpoints = current_data  # Unpack VID and PID
+            self.printerVid.setText(hex(vid))  # Update UI
+            self.printerPid.setText(hex(pid))
+            self.endpoint.setText(out_endpoints[0])
+
+
     def resource_path(self, relative_path):
         """ Get absolute path to resource, works for dev and for PyInstaller """
         try:
@@ -64,6 +78,40 @@ class SettingsWindow(QMainWindow, Ui_MainWindow):
             base_path = os.path.abspath(".")
 
         return os.path.join(base_path, relative_path)
+    
+    def populate_printer_list(self):
+        self.printer_list.clear()  # Clear existing items
+        printers = []  # To store detected printers
+
+        # Find USB devices
+        devices = find_usb(find_all=True, backend=self.backend)
+        for device in devices:
+
+            # Try to find the endpoints of the USB device
+            endpoints = []
+            try:
+                for cfg in device:
+                    for intf in cfg:
+                        for ep in intf:
+                            if ep.bEndpointAddress:
+                                if ep.bEndpointAddress and (ep.bEndpointAddress & 0x80 == 0):  # OUT endpoints
+                                    endpoint_info = hex(ep.bEndpointAddress)
+                                    endpoints.append(endpoint_info)
+            except Exception as e:
+                print(f"Error reading endpoints for device {device}: {e}")
+
+            # Add printer and its endpoint information to the list
+            endpoint_info:int = ', '.join(endpoints) if endpoints else -1
+            printer_info = f"{hex(device.idVendor)}:{hex(device.idProduct)} - {device.product} | {endpoint_info}"
+            printers.append((device.idVendor, device.idProduct, endpoints, printer_info))
+
+        # Add detected printers to the ComboBox
+        for vid, pid, out_endpoints, info in printers:
+            self.printer_list.addItem(info, userData=(vid, pid, out_endpoints))
+
+        # Optionally, handle case where no printers are found
+        if not printers:
+            self.printer_list.addItem("No printers found", userData=None)
 
     def onWirelessModeStateChanged(self):
         if self.wireless_mode.isChecked():
@@ -164,3 +212,9 @@ class SettingsWindow(QMainWindow, Ui_MainWindow):
         except KeyError as e:
             QMessageBox.critical(self, 'Config Error', f'Missing key in configuration file: {e}')
             sys.exit(1)
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    window = SettingsWindow()
+    window.show()
+    sys.exit(app.exec_())
