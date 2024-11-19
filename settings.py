@@ -13,7 +13,7 @@ import os
 class SettingsWindow(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super(SettingsWindow, self).__init__()
-        self.backend = usb.backend.libusb1.get_backend(find_library='libusb-1.0.ddl')
+        self.backend = usb.backend.libusb1.get_backend(find_library=self.resource_path('libusb-1.0.ddl'))
         # Load the UI file first
         uic.loadUi(self.resource_path("MainWindow2.ui"), self)
         background = QPixmap(self.resource_path("background.jpg"))
@@ -100,9 +100,16 @@ class SettingsWindow(QMainWindow, Ui_MainWindow):
             except Exception as e:
                 print(f"Error reading endpoints for device {device}: {e}")
 
+            product_name: str = ""
             # Add printer and its endpoint information to the list
             endpoint_info:int = ', '.join(endpoints) if endpoints else -1
-            printer_info = f"{hex(device.idVendor)}:{hex(device.idProduct)} - {device.product} | {endpoint_info}"
+            if self.supports_langids(device):  # Only proceed if langids are supported
+                try:
+                    # Safely fetch product name
+                    product_name = device.product if device.product else "Unknown Product"
+                except (usb.core.USBError, ValueError):
+                    product_name = "Unknown Product"
+            printer_info = f"{hex(device.idVendor)}:{hex(device.idProduct)} - {product_name} | {endpoint_info}"
             printers.append((device.idVendor, device.idProduct, endpoints, printer_info))
 
         # Add detected printers to the ComboBox
@@ -112,6 +119,15 @@ class SettingsWindow(QMainWindow, Ui_MainWindow):
         # Optionally, handle case where no printers are found
         if not printers:
             self.printer_list.addItem("No printers found", userData=None)
+
+    def supports_langids(self, device):
+        try:
+            # Try to access langids
+            langids = device.langids
+            return True  # langids supported
+        except (usb.core.USBError, NotImplementedError, ValueError):
+            return False  # langids not supported
+
 
     def onWirelessModeStateChanged(self):
         if self.wireless_mode.isChecked():
