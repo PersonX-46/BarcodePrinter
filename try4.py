@@ -3,7 +3,7 @@ import re
 import sys
 import pyodbc
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QLineEdit, QTableWidget, QTableWidgetItem, QMessageBox, QGridLayout, QHBoxLayout, QVBoxLayout, QMenuBar, QAction, QMainWindow
-from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QFileSystemWatcher
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QFileSystemWatcher
 from PyQt5.QtWidgets import QHeaderView
 from PyQt5.QtGui import QIcon, QBrush, QColor
 import usb
@@ -138,10 +138,12 @@ class BarcodeApp(QMainWindow):
                 self.pid = int(config['pid'], 16)
                 self.endpoint = int(config['endpoint'], 16)
                 self.companyName = config['companyName']
-                self.location = config.get('location')
-                self.command_language:str = config['commandLanguage']
+                self.location = config.get('location') 
+                self.useZPL:bool = config['useZPL']
                 self.zpl_template:str = config['zplTemplate']
                 self.tpsl_template:str = config['tpslTemplate']
+                self.ip_address:str = config['ip_address']
+                self.wireless_mode:bool = config['wireless_mode']
         except FileNotFoundError:
             QMessageBox.critical(self, 'Config Error', f'Configuration file not found at {self.config_path}')
             sys.exit(1)
@@ -476,13 +478,16 @@ class BarcodeApp(QMainWindow):
                 copies = self.item_table.item(row, 8).text()
 
                 printer_clear = ""
-                barcode_data = ""
-                if self.command_language.lower() == "tpsl":
-                    print_data = self.replace_placeholders(self.tpsl_template, companyName=self.companyName, description=description, barcode_value = barcode_value, unit_price_integer=unit_price_integer, copies=copies)
-                    printer_clear = "CLS"
-                elif self.command_language.lower() == "zpl":
-                    printer_clear = "^XA^CLS^XZ"
-                    print_data = self.replace_placeholders(self.zpl_template, companyName=self.companyName, description=description, barcode_value = barcode_value, unit_price_integer=unit_price_integer, copies=copies)
+                if not self.wireless_mode:
+
+                    if not self.useZPL:
+                        print_data = self.replace_placeholders(self.tpsl_template, companyName=self.companyName, description=description, barcode_value = barcode_value, unit_price_integer=unit_price_integer, copies=copies)
+                        printer_clear = "CLS"
+                    else:
+                        printer_clear = "^XA^CLS^XZ"
+                        print_data = self.replace_placeholders(self.zpl_template, companyName=self.companyName, description=description, barcode_value = barcode_value, unit_price_integer=unit_price_integer, copies=copies)
+                else:
+                    QMessageBox.information(self, 'Wireless Mode', 'The printer is set to Wireless Mode.')
                 # Send the barcode data to the printer
                 printer.write(self.endpoint, print_data.encode('utf-8'))
                 print(f"Barcode print command sent successfully for item: {barcode_value}")
