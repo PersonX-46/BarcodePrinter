@@ -3,6 +3,8 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 from PyQt5.QtGui import QPixmap
 from PyQt5 import QtWidgets, uic
+import usb.backend
+import usb.backend.libusb1
 from ui_mainwindow2 import Ui_MainWindow
 import json
 from usb.core import find as find_usb
@@ -53,7 +55,8 @@ class SettingsWindow(QMainWindow, Ui_MainWindow):
         self.saveButton = self.findChild(QtWidgets.QPushButton, "btn_save")
         self.saveButton.setCursor(Qt.PointingHandCursor)
         self.saveButton.clicked.connect(self.update_data)
-
+        self.reloadButton = self.findChild(QtWidgets.QPushButton, "btn_reload")
+        self.reloadButton.clicked.connect(self.reload_data)
         # Set the config path
         self.config_path = r'C:\barcode\barcode.json'
 
@@ -68,6 +71,9 @@ class SettingsWindow(QMainWindow, Ui_MainWindow):
             self.printerPid.setText(hex(pid))
             self.endpoint.setText(out_endpoints[0])
 
+    def reload_data(self):
+        self.load_data()
+        self.populate_printer_list()
 
     def resource_path(self, relative_path):
         """ Get absolute path to resource, works for dev and for PyInstaller """

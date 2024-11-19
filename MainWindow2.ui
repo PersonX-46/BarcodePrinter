@@ -566,7 +566,7 @@ QPushButton:hover {
    <widget class="QPushButton" name="btn_cancel">
     <property name="geometry">
      <rect>
-      <x>820</x>
+      <x>650</x>
       <y>580</y>
       <width>151</width>
       <height>51</height>
@@ -590,7 +590,7 @@ QPushButton:hover {
 }
 
 QPushButton:hover {
-	border: 3px;
+	border: 3px solid rgb(26, 95, 180);
 }</string>
     </property>
     <property name="text">
@@ -859,6 +859,40 @@ QPushButton:hover {
 }</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="btn_reload">
+    <property name="geometry">
+     <rect>
+      <x>820</x>
+      <y>580</y>
+      <width>151</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Sans Serif</family>
+      <pointsize>15</pointsize>
+      <weight>75</weight>
+      <italic>true</italic>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QPushButton {
+	border: 2px solid rgb(53, 132, 228);
+	border-top-left-radius: 8px;
+	border-bottom-right-radius: 8px;
+	qproperty-cursor: pointingHandCursor;
+}
+
+QPushButton:hover {
+	border: 3px solid rgb(26, 95, 180);
+}</string>
+    </property>
+    <property name="text">
+     <string>Reload</string>
+    </property>
+   </widget>
    <zorder>img_label</zorder>
    <zorder>label_7</zorder>
    <zorder>label_3</zorder>
@@ -893,6 +927,7 @@ QPushButton:hover {
    <zorder>cb_useIP</zorder>
    <zorder>label_14</zorder>
    <zorder>combo_printers</zorder>
+   <zorder>btn_reload</zorder>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
