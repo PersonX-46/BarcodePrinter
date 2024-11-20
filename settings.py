@@ -11,7 +11,7 @@ import usb
 import os
 
 
-class SettingsWindow(QMainWindow, Ui_MainWindow):
+class SettingsWindow(QMainWindow):
     def __init__(self):
         super(SettingsWindow, self).__init__()
         self.backend = usb.backend.libusb1.get_backend(find_library=self.resource_path('libusb-1.0.ddl'))
