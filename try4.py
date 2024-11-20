@@ -190,6 +190,7 @@ class BarcodeApp(QMainWindow):
         self.item_code_input = QLineEdit(self)
         self.item_code_input.setPlaceholderText('Enter Item Code')
         self.item_code_input.textChanged.connect(self.filter_items_binary)
+        self.item_code_input.returnPressed.connect(self.filter_items)
 
         # Search button
         self.search_by_description = QPushButton("Search", self)
