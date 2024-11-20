@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5 import QtWidgets, uic
 import usb.backend
 import usb.backend.libusb1
@@ -17,6 +17,13 @@ class SettingsWindow(QMainWindow):
         self.backend = usb.backend.libusb1.get_backend(find_library=self.resource_path('libusb-1.0.ddl'))
         # Load the UI file first
         uic.loadUi(self.resource_path("ui/settings.ui"), self)
+        self.setWindowIcon(QIcon(self.resource_path("images/logo.ico")))
+        self.setWindowTitle("Settings")
+        self.setFixedSize(1210, 662)
+
+        # Alternatively, set the maximum size equal to the minimum size to prevent maximizing
+        self.setMaximumSize(1210, 662)
+        self.setMinimumSize(1210, 662)
         background = QPixmap(self.resource_path("images/background.jpg"))
         self.background = self.findChild(QtWidgets.QLabel, "img_label")
         self.background.setPixmap(background)

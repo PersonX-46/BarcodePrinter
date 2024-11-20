@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.uic import loadUi
 from PyQt5 import QtWidgets
 from datetime import datetime
@@ -11,13 +11,22 @@ class PasswordCheck(QMainWindow):
     def __init__(self):
         super().__init__()
         loadUi(self.resource_path("ui/password.ui"), self)
+        self.setWindowIcon(QIcon(self.resource_path("images/logo.ico")))
+        self.setWindowTitle("Authorization")
+        self.setFixedSize(400, 300)
+
+        # Alternatively, set the maximum size equal to the minimum size to prevent maximizing
+        self.setMaximumSize(400, 300)
+        self.setMinimumSize(400, 300)
 
         self.et_password = self.findChild(QtWidgets.QLineEdit, 'et_password')
+        self.et_password.setPlaceholderText("Enter the Password")
         self.btn_checkPassword = self.findChild(QtWidgets.QPushButton, 'btn_checkPassword')
         self.lbl_background = self.findChild(QtWidgets.QLabel, 'lbl_background')
         self.lbl_iconPassword = self.findChild(QtWidgets.QLabel, "lbl_iconPassword")
 
         # Connect button signal to check password
+        self.et_password.returnPressed.connect(self.validate_password)
         self.btn_checkPassword.clicked.connect(self.validate_password)
         self.lbl_background.setPixmap(QPixmap(self.resource_path("images/background.jpg")))
         self.lbl_iconPassword.setPixmap(QPixmap(self.resource_path("images/passwordIcon.png")))

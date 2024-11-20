@@ -86,8 +86,6 @@ class FetchItemsThread(QThread):
         except pyodbc.Error as e:
             print(f"Error fetching items: {e}")
 
-
-
 class BarcodeApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -98,7 +96,7 @@ class BarcodeApp(QMainWindow):
         self.file_watcher.fileChanged.connect(self.handle_config_change)
         self.load_config()
         self.backend = usb.backend.libusb1.get_backend(find_library=self.resource_path('libusb-1.0.ddl'))
-        self.setWindowIcon(QIcon(self.resource_path(("logo.ico"))))
+        self.setWindowIcon(QIcon(self.resource_path(("images/logo.ico"))))
         self.db_connected = False
         self.connection = None
         self.warning_shown = False
