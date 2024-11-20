@@ -17,13 +17,13 @@ class SettingsWindow(QMainWindow, Ui_MainWindow):
         super(SettingsWindow, self).__init__()
         self.backend = usb.backend.libusb1.get_backend(find_library=self.resource_path('libusb-1.0.ddl'))
         # Load the UI file first
-        uic.loadUi(self.resource_path("MainWindow2.ui"), self)
-        background = QPixmap(self.resource_path("background.jpg"))
+        uic.loadUi(self.resource_path("ui/settings.ui"), self)
+        background = QPixmap(self.resource_path("images/background.jpg"))
         self.background = self.findChild(QtWidgets.QLabel, "img_label")
         self.background.setPixmap(background)
 
         self.settings_icon = self.findChild(QtWidgets.QLabel, "settings_icon")
-        settingsIcon = QPixmap(self.resource_path("settingsicon.png"))
+        settingsIcon = QPixmap(self.resource_path("images/settingsicon.png"))
         self.settings_icon.setPixmap(settingsIcon)
 
         # Access UI elements after loading the UI file

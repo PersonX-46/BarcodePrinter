@@ -3,7 +3,7 @@ import re
 import sys
 import pyodbc
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QLineEdit, QTableWidget, QTableWidgetItem, QMessageBox, QGridLayout, QHBoxLayout, QVBoxLayout, QMenuBar, QAction, QMainWindow
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QFileSystemWatcher
+from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QFileSystemWatcher
 from PyQt5.QtWidgets import QHeaderView
 from PyQt5.QtGui import QIcon, QBrush, QColor
 import usb
@@ -12,7 +12,7 @@ import usb.util
 import usb.backend.libusb1
 import json
 from bisect import bisect_left
-from settings import SettingsWindow
+from check_password import PasswordCheck
 
 class FilterItemsBinaryThread(QThread):
     items_filtered = pyqtSignal(list)  # Signal to emit filtered items
@@ -97,7 +97,7 @@ class BarcodeApp(QMainWindow):
         self.file_watcher.addPath(self.config_path)
         self.file_watcher.fileChanged.connect(self.handle_config_change)
         self.load_config()
-        self.backend = usb.backend.libusb1.get_backend(find_library='libusb-1.0.ddl')
+        self.backend = usb.backend.libusb1.get_backend(find_library=self.resource_path('libusb-1.0.ddl'))
         self.setWindowIcon(QIcon(self.resource_path(("logo.ico"))))
         self.db_connected = False
         self.connection = None
@@ -308,7 +308,7 @@ class BarcodeApp(QMainWindow):
         self.display_items(self.items)
 
     def open_settings(self):
-        self.settings_window = SettingsWindow()
+        self.settings_window = PasswordCheck()
         self.settings_window.show()
     
     def display_items(self, items):
