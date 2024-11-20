@@ -3,7 +3,7 @@ import re
 import sys
 import pyodbc
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QLineEdit, QTableWidget, QTableWidgetItem, QMessageBox, QGridLayout, QHBoxLayout, QVBoxLayout, QMenuBar, QAction, QMainWindow
-from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QFileSystemWatcher
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QFileSystemWatcher
 from PyQt5.QtWidgets import QHeaderView
 from PyQt5.QtGui import QIcon, QBrush, QColor
 import usb

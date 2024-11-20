@@ -5,7 +5,6 @@ from PyQt5.QtGui import QPixmap
 from PyQt5 import QtWidgets, uic
 import usb.backend
 import usb.backend.libusb1
-from ui_mainwindow2 import Ui_MainWindow
 import json
 from usb.core import find as find_usb
 import usb
