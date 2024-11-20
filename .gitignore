@@ -2,3 +2,4 @@ venv/
 build
 dist
 barcodeimg.py
+__pycache__
