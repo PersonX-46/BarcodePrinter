@@ -13,6 +13,7 @@ import usb.backend.libusb1
 import json
 from bisect import bisect_left
 from check_password import PasswordCheck
+import socket
 
 class FilterItemsBinaryThread(QThread):
     items_filtered = pyqtSignal(list)  # Signal to emit filtered items
@@ -411,6 +412,20 @@ class BarcodeApp(QMainWindow):
             return items[index]
         return None
 
+    def send_command(self, ip_address, port, command):
+            try:
+                client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                client_socket.connect((ip_address, int(port)))
+                print(f"Connected to {ip_address}:{port}")
+                
+                client_socket.sendall(command.encode('utf-8'))
+                print("Command sent successfully.")
+                
+                client_socket.close()
+            except Exception as e:
+                print(f"Error: {e}")
+                QMessageBox.critical(self, 'Error', f'{e}')
+
     def filter_items_binary(self):
         if not self.db_connected or not hasattr(self, 'all_items'):
             if not self.warning_shown:
@@ -422,7 +437,6 @@ class BarcodeApp(QMainWindow):
         if not search_text:
             self.display_items(self.all_items[:100])
             return
-        
         found_item = self.binary_search(self.all_items, search_text)
         if found_item:
             self.display_items([found_item])
@@ -461,12 +475,13 @@ class BarcodeApp(QMainWindow):
             return
 
         # Set up the printer connection once, outside the loop
-        printer = usb.core.find(idVendor=self.vid, idProduct=self.pid, backend=self.backend)
+        if not self.wireless_mode:
+            printer = usb.core.find(idVendor=self.vid, idProduct=self.pid, backend=self.backend)
 
-        if printer is None:
-            QMessageBox.warning(self, 'Printer Error', 'Printer not found. Check your device and USB permissions.')
-            return
-        printer.set_configuration()
+            if printer is None:
+                QMessageBox.warning(self, 'Printer Error', 'Printer not found. Check your device and USB permissions.')
+                return
+            printer.set_configuration()
 
         try:
             # Loop through each selected item and send the print command
@@ -477,20 +492,30 @@ class BarcodeApp(QMainWindow):
                 copies = self.item_table.item(row, 8).text()
 
                 printer_clear = ""
-                if not self.wireless_mode:
-
-                    if not self.useZPL:
-                        print_data = self.replace_placeholders(self.tpsl_template, companyName=self.companyName, description=description, barcode_value = barcode_value, unit_price_integer=unit_price_integer, copies=copies)
-                        printer_clear = "CLS"
+                if not self.useZPL:
+                    print_data = self.replace_placeholders(self.tpsl_template, companyName=self.companyName, description=description, barcode_value = barcode_value, unit_price_integer=unit_price_integer, copies=copies)
+                    printer_clear = "CLS"
+                    if not self.wireless_mode:
+                        printer.write(self.endpoint, print_data.encode('utf-8'))
+                        print(f"Barcode print command sent successfully for item: {barcode_value}")
+                        
                     else:
-                        printer_clear = "^XA^CLS^XZ"
-                        print_data = self.replace_placeholders(self.zpl_template, companyName=self.companyName, description=description, barcode_value = barcode_value, unit_price_integer=unit_price_integer, copies=copies)
+                        ip, port = self.ip_address.split(":")
+                        print(ip, port)
+                        self.send_command(ip_address=ip, port=port, command=printer_clear)
+                        self.send_command(ip_address=ip, port=port, command=print_data)
                 else:
-                    QMessageBox.information(self, 'Wireless Mode', 'The printer is set to Wireless Mode.')
-                # Send the barcode data to the printer
-                printer.write(self.endpoint, print_data.encode('utf-8'))
-                print(f"Barcode print command sent successfully for item: {barcode_value}")
-
+                    printer_clear = "^XA^CLS^XZ"
+                    print_data = self.replace_placeholders(self.zpl_template, companyName=self.companyName, description=description, barcode_value = barcode_value, unit_price_integer=unit_price_integer, copies=copies)
+                    if not self.wireless_mode:
+                        printer.write(self.endpoint, print_data.encode('utf-8'))
+                        print(f"Barcode print command sent successfully for item: {barcode_value}")
+                        
+                    else:
+                        ip, port = self.ip_address.split(":")
+                        self.send_command(ip_address=ip, port=port, command=printer_clear)
+                        self.send_command(ip_address=ip, port=port, command=print_data)
+                        
         except usb.core.USBError as e:
             QMessageBox.information(self, 'Error', f'{e}')
             print(f"USB Error: {e}")
@@ -499,9 +524,12 @@ class BarcodeApp(QMainWindow):
             print(f'Value Error: {e}')
         finally:
             # Show success message once after all items are printed
-            printer.write(self.endpoint, printer_clear.encode('utf-8'))
-            QMessageBox.information(self, 'Success', 'All selected items have been successfully sent to the printer!')
-            usb.util.dispose_resources(printer)
+            if not self.wireless_mode:
+                QMessageBox.information(self, 'Success', 'All selected items have been successfully sent to the printer!')
+                usb.util.dispose_resources(printer)
+            else:
+                QMessageBox.information(self, 'Success', 'All selected items have been successfully sent to the printer!')
+
 
 
 if __name__ == '__main__':
