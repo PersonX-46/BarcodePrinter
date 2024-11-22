@@ -147,6 +147,8 @@ class SettingsWindow(QMainWindow):
             self.printerPid.setStyleSheet("QLineEdit{border: 1px solid 'gray'; border-radius:8px;}")
             self.printerVid.setEnabled(False)
             self.printerVid.setStyleSheet("QLineEdit{border: 1px solid 'gray'; border-radius:8px;}")
+            self.endpoint.setEnabled(False)
+            self.endpoint.setStyleSheet("QLineEdit{border: 1px solid 'gray'; border-radius:8px;}")
             self.ip_address.setEnabled(True)
             self.ip_address.setStyleSheet("QLineEdit{border: 1px solid rgb(53, 132, 228); border-radius:8px;}")
 
@@ -155,6 +157,8 @@ class SettingsWindow(QMainWindow):
             self.printerPid.setStyleSheet("QLineEdit{border: 1px solid rgb(53, 132, 228); border-radius:8px;}")
             self.printerVid.setEnabled(True)
             self.printerVid.setStyleSheet("QLineEdit{border: 1px solid rgb(53, 132, 228); border-radius:8px;}")
+            self.endpoint.setEnabled(True)
+            self.endpoint.setStyleSheet("QLineEdit{border: 1px solid rgb(53, 132, 228); border-radius:8px;}")
             self.ip_address.setEnabled(False)
             self.ip_address.setStyleSheet("QLineEdit{border: 1px solid 'gray'; border-radius:8px;}")
 

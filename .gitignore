@@ -3,3 +3,5 @@ build
 dist
 barcodeimg.py
 __pycache__
+trials/
+settings2.py
