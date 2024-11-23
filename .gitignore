@@ -4,3 +4,4 @@ dist
 barcodeimg.py
 __pycache__
 trials/
+output/

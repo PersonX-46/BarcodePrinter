@@ -9,6 +9,7 @@ import json
 from usb.core import find as find_usb
 import usb
 import os
+from logger_config import setup_logger
 
 
 class SettingsWindow(QMainWindow):
@@ -16,7 +17,10 @@ class SettingsWindow(QMainWindow):
         super(SettingsWindow, self).__init__()
         self.backend = usb.backend.libusb1.get_backend(find_library=self.resource_path('libusb-1.0.ddl'))
         # Load the UI file first
+        self.logger = setup_logger('Settings2')  # Create logger specific to this window
         uic.loadUi(self.resource_path("ui/settings2.ui"), self)
+        self.logger.info("Settings2 initialized.")
+
         self.setWindowIcon(QIcon(self.resource_path("images/logo.ico")))
         self.setWindowTitle("Settings")
         self.setFixedSize(1210, 696)
@@ -24,6 +28,8 @@ class SettingsWindow(QMainWindow):
         # Alternatively, set the maximum size equal to the minimum size to prevent maximizing
         self.setMaximumSize(1210, 696)
         self.setMinimumSize(1210, 696)
+
+        self.logger.info("Initializing Widgets.")
 
         self.settings_icon = self.findChild(QtWidgets.QLabel, "settings_icon")
         settingsIcon = QPixmap(self.resource_path("images/setting.png"))
@@ -102,18 +108,26 @@ class SettingsWindow(QMainWindow):
         self.saveButton.clicked.connect(self.update_data)
         self.reloadButton = self.findChild(QtWidgets.QPushButton, "btn_reload")
         self.reloadButton.clicked.connect(self.reload_data)
+
+        self.logger.info("Widgets initialized.")
+
         # Set the config path
+        self.logger.info("Initializing config path")
+
         self.config_path = r'C:\barcode\barcode.json'
+
+        self.logger.info("Config path initialized.")
 
         # Load data from JSON file to UI elements
         self.load_data()
+        
 
     def update_printer_in_json(self):
         current_data = self.printer_list.currentData()
         if current_data:  # Ensure data exists
             vid, pid, out_endpoints = current_data  # Unpack VID and PID
-            self.printerVid.setText(hex(vid))  # Update UI
-            self.printerPid.setText(hex(pid))
+            self.printerVid.setText(vid)  # Update UI
+            self.printerPid.setText(pid)
             self.endpoint.setText(out_endpoints[0])
 
     def save_database(self):
@@ -131,9 +145,6 @@ class SettingsWindow(QMainWindow):
             # Write back the updated content (without overwriting the entire file)
             with open(self.config_path, 'w') as file:
                 json.dump(config, file, indent=4)  # Preserve structure
-            
-            print("Successfully updated!")
-            QMessageBox.information(self, 'Success', "Updated Successfully!")
         
         except FileNotFoundError:
             QMessageBox.critical(self, 'Config Error', f'Configuration file not found at {self.config_path}')
@@ -146,6 +157,8 @@ class SettingsWindow(QMainWindow):
         except KeyError as e:
             QMessageBox.critical(self, 'Config Error', f'Missing key in configuration file: {e}')
             sys.exit(1)
+        print("Successfully updated!")
+        QMessageBox.information(self, 'Success', "Updated Successfully!")
 
     def save_printer(self):
         try:
@@ -162,9 +175,6 @@ class SettingsWindow(QMainWindow):
             # Write back the updated configuration
             with open(self.config_path, 'w') as file:
                 json.dump(config, file, indent=4)
-            
-            print("Successfully updated!")
-            QMessageBox.information(self, 'Success', "Updated Successfully!")
         
         except FileNotFoundError:
             QMessageBox.critical(self, 'Config Error', f'Configuration file not found at {self.config_path}')
@@ -175,6 +185,8 @@ class SettingsWindow(QMainWindow):
         except KeyError as e:
             QMessageBox.critical(self, 'Config Error', f'Missing key in configuration file: {e}')
             sys.exit(1)
+        print("Successfully updated!")
+        QMessageBox.information(self, 'Success', "Updated Successfully!")
 
     def save_other_settings(self):
         try:
@@ -190,9 +202,6 @@ class SettingsWindow(QMainWindow):
             with open(self.config_path, 'w') as file:
                 json.dump(config, file, indent=4)
 
-            print("Successfully updated!")
-            QMessageBox.information(self, 'Success', "Updated Successfully!")
-        
         except FileNotFoundError:
             QMessageBox.critical(self, 'Config Error', f'Configuration file not found at {self.config_path}')
             sys.exit(1)
@@ -202,6 +211,9 @@ class SettingsWindow(QMainWindow):
         except KeyError as e:
             QMessageBox.critical(self, 'Config Error', f'Missing key in configuration file: {e}')
             sys.exit(1)
+        print("Successfully updated!")
+        QMessageBox.information(self, 'Success', "Updated Successfully!")
+        
 
     def save_zpl(self):
         try:
@@ -216,9 +228,6 @@ class SettingsWindow(QMainWindow):
             with open(self.config_path, 'w') as file:
                 json.dump(config, file, indent=4)
 
-            print("Successfully updated!")
-            QMessageBox.information(self, 'Success', "Updated Successfully!")
-        
         except FileNotFoundError:
             QMessageBox.critical(self, 'Config Error', f'Configuration file not found at {self.config_path}')
             sys.exit(1)
@@ -227,7 +236,10 @@ class SettingsWindow(QMainWindow):
             sys.exit(1)
         except KeyError as e:
             QMessageBox.critical(self, 'Config Error', f'Missing key in configuration file: {e}')
-            sys.exit(1)
+            sys.exit(1)    
+        print("Successfully updated!")
+        QMessageBox.information(self, 'Success', "Updated Successfully!")
+        
 
     def save_tpsl(self):
         try:
@@ -241,9 +253,6 @@ class SettingsWindow(QMainWindow):
             # Write back the updated configuration
             with open(self.config_path, 'w') as file:
                 json.dump(config, file, indent=4)
-
-            print("Successfully updated!")
-            QMessageBox.information(self, 'Success', "Updated Successfully!")
         
         except FileNotFoundError:
             QMessageBox.critical(self, 'Config Error', f'Configuration file not found at {self.config_path}')
@@ -254,6 +263,8 @@ class SettingsWindow(QMainWindow):
         except KeyError as e:
             QMessageBox.critical(self, 'Config Error', f'Missing key in configuration file: {e}')
             sys.exit(1)
+        print("Successfully updated!")
+        QMessageBox.information(self, 'Success', "Updated Successfully!")
 
     def reload_data(self):
         self.load_data()
@@ -273,43 +284,57 @@ class SettingsWindow(QMainWindow):
         self.printer_list.clear()  # Clear existing items
         printers = []  # To store detected printers
 
-        # Find USB devices
-        devices = find_usb(find_all=True, backend=self.backend)
-        for device in devices:
+        try:
+            # Find all USB devices
+            devices = usb.core.find(find_all=True)
 
-            # Try to find the endpoints of the USB device
-            endpoints = []
-            try:
-                for cfg in device:
-                    if cfg.bDeviceClass == 7:
-                        for intf in cfg:
-                            for ep in intf:
-                                if ep.bEndpointAddress:
-                                    if ep.bEndpointAddress and (ep.bEndpointAddress & 0x80 == 0):  # OUT endpoints
-                                        endpoint_info = hex(ep.bEndpointAddress)
-                                        endpoints.append(endpoint_info)
-            except Exception as e:
-                print(f"Error reading endpoints for device {device}: {e}")
+            for device in devices:
+                is_printer = False  # Track if the device is identified as a printer
+                endpoints = []
 
-            product_name: str = ""
-            # Add printer and its endpoint information to the list
-            endpoint_info:int = ', '.join(endpoints) if endpoints else -1
-            if self.supports_langids(device):  # Only proceed if langids are supported
-                try:
-                    # Safely fetch product name
-                    product_name = device.product if device.product else "Unknown Product"
-                except (usb.core.USBError, ValueError):
-                    product_name = "Unknown Product"
-            printer_info = f"{hex(device.idVendor)}:{hex(device.idProduct)} - {product_name} | {endpoint_info}"
-            printers.append((device.idVendor, device.idProduct, endpoints, printer_info))
+                # Check if the device class is 7 (Printer)
+                if device.bDeviceClass == 7:
+                    is_printer = True
 
-        # Add detected printers to the ComboBox
-        for vid, pid, out_endpoints, info in printers:
-            self.printer_list.addItem(info, userData=(vid, pid, out_endpoints))
+                # If not, check each configuration and interface for class 7
+                else:
+                    for config in device:
+                        for interface in config:
+                            if interface.bInterfaceClass == 7:
+                                is_printer = True
+                                # Collect OUT endpoints (bEndpointAddress & 0x80 == 0)
+                                for ep in interface:
+                                    if ep.bEndpointAddress & 0x80 == 0:
+                                        endpoints.append(hex(ep.bEndpointAddress))
+                                break  # Found a printer, exit loop
 
-        # Optionally, handle case where no printers are found
-        if not printers:
-            self.printer_list.addItem("No printers found", userData=None)
+                # If identified as a printer, gather information
+                if is_printer:
+                    try:
+                        product_name = device.product if device.product else "Unknown Product"
+                    except (usb.core.USBError, ValueError):
+                        product_name = "Unknown Product"
+
+                    vid = hex(device.idVendor)
+                    pid = hex(device.idProduct)
+                    endpoint_info = ', '.join(endpoints) if endpoints else "No OUT endpoints"
+                    printer_info = f"{vid}:{pid} - {product_name} | {endpoint_info}"
+                    printers.append((vid, pid, endpoints, printer_info))
+
+            # Add printers to the ComboBox
+            for vid, pid, out_endpoints, info in printers:
+                self.printer_list.addItem(info, userData=(vid, pid, out_endpoints))
+
+            # Handle case where no printers are found
+            if not printers:
+                self.printer_list.addItem("No printers found", userData=None)
+
+        except usb.core.USBError as e:
+            print(f"USB Error: {e}")
+            self.printer_list.addItem("USB Error", userData=None)
+        except Exception as e:
+            print(f"Error: {e}")
+            self.printer_list.addItem("Error occurred", userData=None)
 
     def supports_langids(self, device):
         try:

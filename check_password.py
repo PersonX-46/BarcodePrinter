@@ -56,7 +56,6 @@ class PasswordCheck(QMainWindow):
 
         # Check the password
         if entered_password == str(expected_password):
-            QMessageBox.information(self, "Success", "Password correct. Loading Main Window...")
             self.open_main_window()
         else:
             QMessageBox.warning(self, "Error", "Incorrect password!")
