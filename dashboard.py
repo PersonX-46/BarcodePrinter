@@ -11,6 +11,7 @@ import os
 import socket
 import pyodbc
 from logger_config import setup_logger 
+from version import __version__
 
 class DashboardWindow(QMainWindow):
     def __init__(self):
@@ -43,6 +44,8 @@ class DashboardWindow(QMainWindow):
         self.lbl_resultConfiguration = self.findChild(QtWidgets.QLabel, "lbl_configurationFileResult")
         self.lbl_loggingResult = self.findChild(QtWidgets.QLabel, "lbl_loggingResult")
         self.lbl_datetime = self.findChild(QtWidgets.QLabel, "lbl_datetime")
+        self.lbl_version = self.findChild(QtWidgets.QLabel, "lbl_version")
+        self.lbl_version.setText(f"V{__version__}")
         self.btn_checkConnectedDevices = self.findChild(QtWidgets.QPushButton, "btn_checkConnectedDevices")
         self.btn_checkConnectedDevices.clicked.connect(self.count_connected_printers)
         self.btn_ping = self.findChild(QtWidgets.QPushButton, "btn_ping")

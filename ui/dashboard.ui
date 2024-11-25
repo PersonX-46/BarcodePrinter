@@ -1906,6 +1906,37 @@ QPushButton:hover {
      <bool>true</bool>
     </property>
    </widget>
+   <widget class="QLabel" name="lbl_version">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>70</y>
+      <width>111</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Sans Serif</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+	background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(47, 141, 255, 255), stop:1 rgba(22, 79, 149, 255));
+	border-radius: 8px;
+	color: white;
+	
+}</string>
+    </property>
+    <property name="text">
+     <string>version 2.0.1</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
    <zorder>lbl_background</zorder>
    <zorder>frame_2</zorder>
    <zorder>frame</zorder>
@@ -1923,6 +1954,7 @@ QPushButton:hover {
    <zorder>frame_15</zorder>
    <zorder>frame_18</zorder>
    <zorder>frame_16</zorder>
+   <zorder>lbl_version</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

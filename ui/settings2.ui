@@ -23,7 +23,7 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>120</y>
+      <y>130</y>
       <width>411</width>
       <height>261</height>
      </rect>
@@ -520,7 +520,7 @@
     <property name="geometry">
      <rect>
       <x>450</x>
-      <y>120</y>
+      <y>130</y>
       <width>411</width>
       <height>261</height>
      </rect>
@@ -1010,7 +1010,7 @@
     <property name="geometry">
      <rect>
       <x>870</x>
-      <y>120</y>
+      <y>130</y>
       <width>331</width>
       <height>261</height>
      </rect>
@@ -1448,7 +1448,7 @@ QPushButton:hover {
     <property name="geometry">
      <rect>
       <x>490</x>
-      <y>390</y>
+      <y>400</y>
       <width>471</width>
       <height>259</height>
      </rect>
@@ -1623,7 +1623,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>390</y>
+      <y>400</y>
       <width>451</width>
       <height>259</height>
      </rect>
@@ -1853,6 +1853,37 @@ p, li { white-space: pre-wrap; }
      <bool>true</bool>
     </property>
    </widget>
+   <widget class="QLabel" name="lbl_version">
+    <property name="geometry">
+     <rect>
+      <x>300</x>
+      <y>80</y>
+      <width>111</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Sans Serif</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+	background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(47, 141, 255, 255), stop:1 rgba(22, 79, 149, 255));
+	border-radius: 8px;
+	color: white;
+	
+}</string>
+    </property>
+    <property name="text">
+     <string>version 2.0.1</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
    <zorder>lbl_background</zorder>
    <zorder>frame_4</zorder>
    <zorder>frame_15</zorder>
@@ -1865,6 +1896,7 @@ p, li { white-space: pre-wrap; }
    <zorder>frame_9</zorder>
    <zorder>lbl_iconLogo</zorder>
    <zorder>label_12</zorder>
+   <zorder>lbl_version</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

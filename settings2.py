@@ -6,11 +6,10 @@ from PyQt5 import QtWidgets, uic
 import usb.backend
 import usb.backend.libusb1
 import json
-from usb.core import find as find_usb
 import usb
 import os
 from logger_config import setup_logger
-
+from version import __version__
 
 class SettingsWindow(QMainWindow):
     def __init__(self):
@@ -54,6 +53,8 @@ class SettingsWindow(QMainWindow):
         try:
             self.lbl_bg = self.findChild(QtWidgets.QLabel, "lbl_background")
             self.lbl_bg.setPixmap(background)
+            self.lbl_version = self.findChild(QtWidgets.QLabel, "lbl_version")
+            self.lbl_version.setText(f"V{__version__}")
             self.lbl_iconLogo = self.findChild(QtWidgets.QLabel, "lbl_iconLogo")
             self.lbl_iconLogo.setPixmap(logoIcon)
             self.icon_database = self.findChild(QtWidgets.QLabel, "lbl_iconDatabase")
