@@ -1,6 +1,6 @@
 import sys
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QButtonGroup
+from PyQt5.QtCore import QTimer, QDateTime
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5 import QtWidgets, uic
 import usb.backend
@@ -42,6 +42,7 @@ class DashboardWindow(QMainWindow):
         self.lbl_resultDatabase = self.findChild(QtWidgets.QLabel, "lbl_databaseResult")
         self.lbl_resultConfiguration = self.findChild(QtWidgets.QLabel, "lbl_configurationFileResult")
         self.lbl_loggingResult = self.findChild(QtWidgets.QLabel, "lbl_loggingResult")
+        self.lbl_datetime = self.findChild(QtWidgets.QLabel, "lbl_datetime")
         self.btn_checkConnectedDevices = self.findChild(QtWidgets.QPushButton, "btn_checkConnectedDevices")
         self.btn_checkConnectedDevices.clicked.connect(self.count_connected_printers)
         self.btn_ping = self.findChild(QtWidgets.QPushButton, "btn_ping")
@@ -94,6 +95,20 @@ class DashboardWindow(QMainWindow):
         self.icon_printer2.setPixmap(printerIcon)
 
         self.load_data()
+
+        self.update_datetime()
+
+        # Set up a QTimer to update the datetime every 60 seconds (or as needed)
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_datetime)
+        self.timer.start(60000)  # Update every 60 seconds
+
+    def update_datetime(self):
+        # Get the current date and time in the desired format
+        current_datetime = QDateTime.currentDateTime().toString('dd/MM/yyyy hh:mm AP')
+        
+        # Update the label text with the formatted date and time
+        self.lbl_datetime.setText(current_datetime)
 
     def resource_path(self, relative_path):
         """ Get absolute path to resource, works for dev and for PyInstaller """
