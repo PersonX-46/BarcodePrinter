@@ -621,59 +621,59 @@ class SettingsWindow(QMainWindow):
             QMessageBox.critical(self, 'Config Error', f'Missing key in configuration file: {e}')
             sys.exit(1)
 
-def update_data(self):
-    try:
-        # Log the start of the process
-        self.logger.info("Updating configuration data.")
+    def update_data(self):
+        try:
+            # Log the start of the process
+            self.logger.info("Updating configuration data.")
 
-        # Read the current configuration file
-        with open(self.config_path, 'r') as f:
-            config = json.load(f)
-        
-        # Log the data being updated
-        self.logger.info("Updating fields in the configuration file.")
+            # Read the current configuration file
+            with open(self.config_path, 'r') as f:
+                config = json.load(f)
+            
+            # Log the data being updated
+            self.logger.info("Updating fields in the configuration file.")
 
-        # Update necessary keys from the UI inputs
-        config['server'] = self.serverName.text()
-        config['database'] = self.databaseName.text()
-        config['username'] = self.userName.text()
-        config['password'] = self.password.text()
-        config['vid'] = self.printerVid.text()
-        config['pid'] = self.printerPid.text()
-        config['endpoint'] = self.endpoint.text()
-        config['companyName'] = self.companyName.text()
-        config['location'] = self.location.text()
-        config['ip_address'] = self.ip_address.text()
-        config['zplTemplate'] = self.zplCommand.toPlainText()
-        config['tpslTemplate'] = self.tpslCommand.toPlainText()
-        config['wireless_mode'] = self.wireless_mode.isChecked()
-        config['useZPL'] = self.use_zpl.isChecked()
+            # Update necessary keys from the UI inputs
+            config['server'] = self.serverName.text()
+            config['database'] = self.databaseName.text()
+            config['username'] = self.userName.text()
+            config['password'] = self.password.text()
+            config['vid'] = self.printerVid.text()
+            config['pid'] = self.printerPid.text()
+            config['endpoint'] = self.endpoint.text()
+            config['companyName'] = self.companyName.text()
+            config['location'] = self.location.text()
+            config['ip_address'] = self.ip_address.text()
+            config['zplTemplate'] = self.zplCommand.toPlainText()
+            config['tpslTemplate'] = self.tpslCommand.toPlainText()
+            config['wireless_mode'] = self.wireless_mode.isChecked()
+            config['useZPL'] = self.use_zpl.isChecked()
 
-        # Write back the updated content (without overwriting the entire file)
-        with open(self.config_path, 'w') as file:
-            json.dump(config, file, indent=4)
+            # Write back the updated content (without overwriting the entire file)
+            with open(self.config_path, 'w') as file:
+                json.dump(config, file, indent=4)
 
-        # Log successful update
-        self.logger.info("Configuration file updated successfully.")
+            # Log successful update
+                self.logger.info("Configuration file updated successfully.")
 
-        print("Successfully updated!")
-        QMessageBox.information(self, 'Success', "Updated Successfully!")
-        self.close()
+                print("Successfully updated!")
+                QMessageBox.information(self, 'Success', "Updated Successfully!")
+                self.close()
 
-    except FileNotFoundError:
-        self.logger.error(f"Configuration file not found at {self.config_path}")
-        QMessageBox.critical(self, 'Config Error', f'Configuration file not found at {self.config_path}')
-        sys.exit(1)
+        except FileNotFoundError:
+            self.logger.error(f"Configuration file not found at {self.config_path}")
+            QMessageBox.critical(self, 'Config Error', f'Configuration file not found at {self.config_path}')
+            sys.exit(1)
 
-    except json.JSONDecodeError:
-        self.logger.error('Error parsing the configuration file.')
-        QMessageBox.critical(self, 'Config Error', 'Error parsing the configuration file.')
-        sys.exit(1)
+        except json.JSONDecodeError:
+            self.logger.error('Error parsing the configuration file.')
+            QMessageBox.critical(self, 'Config Error', 'Error parsing the configuration file.')
+            sys.exit(1)
 
-    except KeyError as e:
-        self.logger.error(f'Missing key in configuration file: {e}')
-        QMessageBox.critical(self, 'Config Error', f'Missing key in configuration file: {e}')
-        sys.exit(1)
+        except KeyError as e:
+            self.logger.error(f'Missing key in configuration file: {e}')
+            QMessageBox.critical(self, 'Config Error', f'Missing key in configuration file: {e}')
+            sys.exit(1)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
