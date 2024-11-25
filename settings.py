@@ -149,7 +149,10 @@ class SettingsWindow(QMainWindow):
             self.printerVid.setStyleSheet("QLineEdit{border: 1px solid 'gray'; border-radius:8px;}")
             self.endpoint.setEnabled(False)
             self.endpoint.setStyleSheet("QLineEdit{border: 1px solid 'gray'; border-radius:8px;}")
+<<<<<<< HEAD
             
+=======
+>>>>>>> feature/dashboard
             self.ip_address.setEnabled(True)
             self.ip_address.setStyleSheet("QLineEdit{border: 1px solid rgb(53, 132, 228); border-radius:8px;}")
 
