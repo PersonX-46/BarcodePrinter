@@ -903,43 +903,6 @@
      </property>
     </widget>
    </widget>
-   <widget class="QPushButton" name="btn_about">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>640</y>
-      <width>191</width>
-      <height>61</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>Sans Serif</family>
-      <pointsize>15</pointsize>
-      <weight>75</weight>
-      <italic>true</italic>
-      <bold>true</bold>
-     </font>
-    </property>
-    <property name="cursor">
-     <cursorShape>PointingHandCursor</cursorShape>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">QPushButton {
-	border: 4px solid rgb(53, 132, 228);
-	border-top-left-radius: 8px;
-	border-bottom-right-radius: 8px;
-	qproperty-cursor: pointingHandCursor;
-}
-
-QPushButton:hover {
-	border: 6px solid rgb(26, 95, 180);
-}</string>
-    </property>
-    <property name="text">
-     <string>About</string>
-    </property>
-   </widget>
    <widget class="QPushButton" name="btn_reload">
     <property name="geometry">
      <rect>
@@ -1819,7 +1782,7 @@ QPushButton:hover {
     <property name="geometry">
      <rect>
       <x>810</x>
-      <y>10</y>
+      <y>20</y>
       <width>381</width>
       <height>71</height>
      </rect>
@@ -1946,7 +1909,6 @@ QPushButton:hover {
    <zorder>lbl_datetime</zorder>
    <zorder>frame_3</zorder>
    <zorder>frame_4</zorder>
-   <zorder>btn_about</zorder>
    <zorder>btn_reload</zorder>
    <zorder>frame_6</zorder>
    <zorder>btn_close</zorder>
