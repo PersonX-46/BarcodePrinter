@@ -45,7 +45,7 @@ class DashboardWindow(QMainWindow):
         self.lbl_loggingResult = self.findChild(QtWidgets.QLabel, "lbl_loggingResult")
         self.lbl_datetime = self.findChild(QtWidgets.QLabel, "lbl_datetime")
         self.lbl_version = self.findChild(QtWidgets.QLabel, "lbl_version")
-        self.lbl_version.setText(f"V{__version__}")
+        self.lbl_version.setText(f"Version {__version__}")
         self.btn_checkConnectedDevices = self.findChild(QtWidgets.QPushButton, "btn_checkConnectedDevices")
         self.btn_checkConnectedDevices.clicked.connect(self.count_connected_printers)
         self.btn_ping = self.findChild(QtWidgets.QPushButton, "btn_ping")

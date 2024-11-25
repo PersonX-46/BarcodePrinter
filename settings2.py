@@ -6,6 +6,7 @@ from PyQt5 import QtWidgets, uic
 import usb.backend
 import usb.backend.libusb1
 import json
+from usb.core import find as find_usb
 import usb
 import os
 from logger_config import setup_logger
@@ -53,10 +54,10 @@ class SettingsWindow(QMainWindow):
         try:
             self.lbl_bg = self.findChild(QtWidgets.QLabel, "lbl_background")
             self.lbl_bg.setPixmap(background)
-            self.lbl_version = self.findChild(QtWidgets.QLabel, "lbl_version")
-            self.lbl_version.setText(f"V{__version__}")
             self.lbl_iconLogo = self.findChild(QtWidgets.QLabel, "lbl_iconLogo")
             self.lbl_iconLogo.setPixmap(logoIcon)
+            self.lbl_version = self.findChild(QtWidgets.QLabel, "lbl_version")
+            self.lbl_version.setText(f"Version {__version__}")
             self.icon_database = self.findChild(QtWidgets.QLabel, "lbl_iconDatabase")
             self.icon_printer = self.findChild(QtWidgets.QLabel, "lbl_iconPrinter")
             self.icon_other_settings = self.findChild(QtWidgets.QLabel, "lbl_iconOtherSettings")
@@ -649,17 +650,16 @@ class SettingsWindow(QMainWindow):
             config['tpslTemplate'] = self.tpslCommand.toPlainText()
             config['wireless_mode'] = self.wireless_mode.isChecked()
             config['useZPL'] = self.use_zpl.isChecked()
+            config['logging'] = self.cb_logging.isChecked()
 
             # Write back the updated content (without overwriting the entire file)
             with open(self.config_path, 'w') as file:
                 json.dump(config, file, indent=4)
 
             # Log successful update
-                self.logger.info("Configuration file updated successfully.")
-
-                print("Successfully updated!")
-                QMessageBox.information(self, 'Success', "Updated Successfully!")
-                self.close()
+            self.logger.info("Configuration file updated successfully.")
+            QMessageBox.information(self, 'Success', "Updated Successfully!")
+            self.close()
 
         except FileNotFoundError:
             self.logger.error(f"Configuration file not found at {self.config_path}")
