@@ -22,7 +22,7 @@ class DashboardWindow(QMainWindow):
         self.backend = usb.backend.libusb1.get_backend(find_library=self.resource_path('libusb-1.0.ddl'))
         self.config_path = r'C:\barcode\barcode.json'
         # Load the UI file first
-        uic.loadUi(self.resource_path("ui/dashboard.ui"), self)
+        uic.loadUi(self.resource_path("ui/dashboard_darktheme.ui"), self)
         self.setWindowIcon(QIcon(self.resource_path("images/logo.ico")))
         self.setWindowTitle("Dashboard")
         self.setFixedSize(1212, 760)
@@ -34,8 +34,8 @@ class DashboardWindow(QMainWindow):
         background = QPixmap(self.resource_path("images/background.jpg"))
 
         #Initialize widgets
-        self.lbl_bg = self.findChild(QtWidgets.QLabel, "lbl_background")
-        self.lbl_bg.setPixmap(background)
+        #self.lbl_bg = self.findChild(QtWidgets.QLabel, "lbl_background")
+        #self.lbl_bg.setPixmap(background)
         self.lbl_dashboardIcon = self.findChild(QtWidgets.QLabel, "dashboard_icon")
         self.lbl_dashboardIcon.setPixmap(QPixmap(self.resource_path("images/dashboard.png")))
         self.lbl_resultConnectedDevice = self.findChild(QtWidgets.QLabel, "lbl_connectedDevicesResult")
@@ -72,7 +72,7 @@ class DashboardWindow(QMainWindow):
 
         #Icon section
         self.logo_icon = self.findChild(QtWidgets.QLabel, "lbl_iconLogo")
-        logoIcon = QPixmap(self.resource_path("images/logo.jpeg"))
+        logoIcon = QPixmap(self.resource_path("images/logo.png"))
         databaseIcon = QPixmap(self.resource_path("images/database.png"))
         printerIcon = QPixmap(self.resource_path("images/printer.png"))
         otherSettingsIcon = QPixmap(self.resource_path("images/settings.png"))
